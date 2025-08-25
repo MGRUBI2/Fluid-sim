@@ -43,7 +43,7 @@ int main() {
 			if (!mt)
 				motionUpdate(water, dt);
 			else
-				motionUpdate2(water, dt,TP.get_threadNum(),TP);
+				motionUpdate2_1(water, dt,TP.get_threadNum(),TP);
 			
 
 			auto end = std::chrono::high_resolution_clock::now();

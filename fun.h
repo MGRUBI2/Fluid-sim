@@ -8,6 +8,10 @@
 #include <algorithm>
 #include <functional>
 #include <thread>
+#include <fstream>
+#include <sstream>
+#include <stdexcept>
+#include <mutex>
 
 
 
@@ -313,6 +317,7 @@ private:
 	std::vector<std::thread> t;
 	//std::vector<worker> wt;//working threads
 	size_t threadNum;
+	std::mutex q_mutex;
 public:
 	Thread_pool() : threadNum(std::thread::hardware_concurrency()) {for (int i = 0; i < threadNum; i++) t.push_back(std::thread([this]() {work(); }));}
 	~Thread_pool() {for (auto& x : t) { if (x.joinable()) x.join(); }t.clear(); }
@@ -321,11 +326,15 @@ public:
 
 	void enque(std::function<void()> x) { q.push(x); };
 	void deque(std::function<void()> x) { q.pop(); };
+	std::thread::id get_id() { return std::this_thread::get_id(); }
 
 	void work() {
-		while (true) {
+		while (true) {//triba dodat mutex al pod private da bude globalan za sve threadove
+			
+			std::unique_lock<std::mutex> lock(q_mutex);
 
 			if (q.empty()) {
+				lock.unlock();
 				std::this_thread::sleep_for(std::chrono::microseconds(250));
 				continue;
 			}
@@ -333,8 +342,9 @@ public:
 			std::function<void()> task = q.front();
 			q.pop();
 
-			task();
-
+			lock.unlock();
+			
+			task();		
 		}
 	}
 
@@ -347,3 +357,4 @@ void input(bool* running, std::vector<Drop>& water);
 void render(std::vector<Drop> water);
 void motionUpdate(std::vector<Drop>& water, double dt);
 void motionUpdate2(std::vector<Drop>& water, double dt,size_t threadNum, Thread_pool& TP);
+void motionUpdate2_1(std::vector<Drop>& water, double dt,size_t threadNum, Thread_pool& TP);
