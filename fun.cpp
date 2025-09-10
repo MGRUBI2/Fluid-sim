@@ -81,17 +81,16 @@ void motionUpdate2_1(std::vector<Drop>& water, double dt, size_t threadNum, Thre
 
 	for (int i = 0; i < threadNum; i++) {
 		std::span<Drop> new_vec(water.begin() + aBegin, water.begin() + aEnd);
-
 		TP.enque([b = aBegin, e = aEnd, &water, dt_ = dt]() {std::for_each(water.begin() + b, water.begin() + e, [dt_](Drop& x) {x.gravityEffect(dt_); x.boundControl(); x.motionUpdate(dt_); }); });//zbog multithread-anja lambdin captur nisan stavia & nego san zasebno stavia parametre da se nebi sta pomisalo
 		TP.enque([vec=new_vec, dt_=dt]() {colision(vec, dt_); });
 		aBegin += a;
 		aEnd += a;
 
 	}
-	/*TP.enque([b = aBegin, e = aEnd, &water, dt_ = dt]() {std::for_each(water.begin() + e, water.end(), [dt_](Drop& x) {x.gravityEffect(dt_); x.boundControl(); x.motionUpdate(dt_); }); });	
-	std::span<Drop> new_vec(water.begin() + aEnd, water.end());
+	TP.enque([b = aBegin-a, e = aEnd, &water, dt_ = dt]() {std::for_each(water.begin() + b, water.end(), [dt_](Drop& x) {x.gravityEffect(dt_); x.boundControl(); x.motionUpdate(dt_); }); });//na ovoj i sljedecoj liniji oduziman sa a jer inace je index out of range	
+	std::span<Drop> new_vec(water.begin() + aBegin-a, water.end());
 
-	TP.enque([vec = new_vec, dt]() {colision(vec, dt); });*/
+	TP.enque([vec = new_vec, dt]() {colision(vec, dt); });
 
 }
 
