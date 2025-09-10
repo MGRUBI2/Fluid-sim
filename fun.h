@@ -305,17 +305,11 @@ public:
 	}
 };
 
-//typedef struct worker {//sa ovom strukturom mogu znat jeli thread zauzet
-//	std::thread thread;
-//	bool idle=true;
-//}worker;
-
 
 class Thread_pool {
 private:
 	std::queue<std::function<void()>> q; //red funkcija
 	std::vector<std::thread> t;
-	//std::vector<worker> wt;//working threads
 	size_t threadNum;
 	std::mutex q_mutex;
 public:
@@ -325,11 +319,11 @@ public:
 	size_t get_threadNum() { return threadNum; };
 
 	void enque(std::function<void()> x) { q.push(x); };
-	void deque(std::function<void()> x) { q.pop(); };
+	void deque() { q.pop(); };
 	std::thread::id get_id() { return std::this_thread::get_id(); }
 
 	void work() {
-		while (true) {//triba dodat mutex al pod private da bude globalan za sve threadove
+		while (true) {
 			
 			std::unique_lock<std::mutex> lock(q_mutex);
 
@@ -339,12 +333,13 @@ public:
 				continue;
 			}
 
-			std::function<void()> task = q.front();
+			std::function<void()> task = std::move(q.front());
 			q.pop();
 
 			lock.unlock();
 			
-			task();		
+			if (task)
+				task();		
 		}
 	}
 
