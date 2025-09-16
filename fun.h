@@ -277,11 +277,10 @@ public:
 	}
 
 	void dropColision(Drop& a, Drop& b, double dt) {
-		float r = a.get_radius()+3;//nebitno ciji radius jer imaju svi isti
-		//float brz = 0.5 ;//stavia san odokativno
+		float r = a.get_radius()+3;
 		float distance = sqrt(pow((b.get_posx() - a.get_posx()), 2) + pow((b.get_posy() - a.get_posy()), 2));
 
-		if (distance < r) {//ovo je slucaj kad se taknu. 
+		if (distance < r) { 
 
 			if (a.get_posx() > b.get_posx()) {
 				a.add_posx(r/2);
@@ -294,21 +293,17 @@ public:
 
 			if (a.get_posy() > b.get_posy()) {
 				b.set_posy(a.get_posy() -r/2);
-				b.velocity.at(1)= 0;//postavljan vertikalnu brzinu na 0 posto ga objekt ispod zaustavlja
+				b.velocity.at(1)= (b.velocity.at(1)+a.velocity.at(1))/2;//formula for law of conservation of linear momentum for non elastic colision with same mass
 			}
 
 			else if (a.get_posy() <= b.get_posy()) {
 				a.set_posy(b.get_posy() - r/2);
-				a.velocity.at(1)= 0;//postavljan vertikalnu brzinu na 0 posto ga objekt ispod zaustavlja
+				a.velocity.at(1)= (b.velocity.at(1)+a.velocity.at(1))/2;
 			}
 		}
 	}
 };
 
-//typedef struct worker {//sa ovom strukturom mogu znat jeli thread zauzet
-//	std::thread thread;
-//	bool idle=true;
-//}worker;
 
 
 class Thread_pool {
@@ -344,7 +339,8 @@ public:
 
 			lock.unlock();
 			
-			task();		
+			if (task)
+				task();		
 		}
 	}
 
