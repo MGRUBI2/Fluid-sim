@@ -12,6 +12,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <mutex>
+#include <condition_variable>
 
 
 
@@ -310,35 +311,37 @@ class Thread_pool {
 private:
 	std::queue<std::function<void()>> q; //red funkcija
 	std::vector<std::thread> t;
-	//std::vector<worker> wt;//working threads
 	size_t threadNum;
+	std::condition_variable cv;
 	std::mutex q_mutex;
+	bool ready_for_work=true;
 public:
 	Thread_pool() : threadNum(std::thread::hardware_concurrency()) {for (int i = 0; i < threadNum; i++) t.push_back(std::thread([this]() {work(); }));}
 	~Thread_pool() {for (auto& x : t) { if (x.joinable()) x.join(); }t.clear(); }
 
 	size_t get_threadNum() { return threadNum; };
 
-	void enque(std::function<void()> x) { q.push(x); };
+	void enque(std::function<void()> x) { q.push(std::move(x)); cv.notify_one(); };
 	void deque(std::function<void()> x) { q.pop(); };
 	std::thread::id get_id() { return std::this_thread::get_id(); }
 
 	void work() {
-		while (true) {//triba dodat mutex al pod private da bude globalan za sve threadove
-			
-			std::unique_lock<std::mutex> lock(q_mutex);
+		while (true) {//not sure if multthreading works correct now
 
-			if (q.empty()) {
+		/*	if (q.empty()) {
 				lock.unlock();
 				std::this_thread::sleep_for(std::chrono::microseconds(250));
 				continue;
+			}*/
+			std::function<void()> task;
+			{
+				std::unique_lock<std::mutex> lock(q_mutex);
+				cv.wait(lock, [this]() {return !q.empty();});
+				task = std::move(q.front());
+				q.pop();
 			}
 
-			std::function<void()> task = q.front();
-			q.pop();
 
-			lock.unlock();
-			
 			if (task)
 				task();		
 		}
