@@ -63,6 +63,10 @@ void motionUpdate2_1(std::vector<Drop>& water, double dt, size_t threadNum, Thre
 
 }
 
+void sort_by_cell_id(std::vector<Drop>& water) {//sorts them the way they are placed on grid for better colision detection
+	std::sort(water.begin(), water.end(), [](Drop a, Drop b) {return (a.get_cellID_row() * 1000 + a.get_cellID_column()) < (b.get_cellID_row() * 1000 + b.get_cellID_column()); });
+}
+
 void render(std::vector<Drop> water) {
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);

@@ -35,6 +35,7 @@ int main() {
 		input(&running, water);
 		if (!water.empty()) {
 			
+			sort_by_cell_id(water);
 			render(water);
 
 			auto start = std::chrono::high_resolution_clock::now();

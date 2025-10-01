@@ -245,7 +245,7 @@ public:
 	}
 
 
-	void colision_det(double dt) {//funkcija pregledava colision unutar celije, unutar celije i sljedece celije i donje celije
+	void colision_det(double dt) {//funkcija pregledava colision unutar celije, sljedece celije i donje celije
 
 		for (int z = 0; z < v.size(); z++) {
 			std::vector< std::reference_wrapper<Drop>>& x = v.at(z);
@@ -352,8 +352,9 @@ public:
 
 
 
-class Flip_method {
-
+class Flip_method_grid {
+private:
+	int cell_size= 30;
 };
 
 
@@ -365,3 +366,4 @@ void render(std::vector<Drop> water);
 void motionUpdate(std::vector<Drop>& water, double dt);
 void motionUpdate2(std::vector<Drop>& water, double dt,size_t threadNum, Thread_pool& TP);
 void motionUpdate2_1(std::vector<Drop>& water, double dt,size_t threadNum, Thread_pool& TP);
+void sort_by_cell_id(std::vector<Drop>& water);
