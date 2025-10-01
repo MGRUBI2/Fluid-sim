@@ -42,36 +42,6 @@ void motionUpdate(std::vector<Drop>& water, double dt) {
 	colision(water, dt);
 }
 
-/////////////posli optimizirat ovo tako da je sve unutar jedne for petlje a ne dvi std::for_each!!!!!
-//void motionUpdate2(std::vector<Drop>& water, double dt, size_t threadNum, Thread_pool& TP) { //ode djelim vektor na djelove i saljem funkcije u thread_pool
-//	size_t a = water.size() / threadNum;
-//	size_t aBegin = 0;
-//	size_t aEnd = a;
-//
-//	
-//	for (int i = 0; i < threadNum; i++) {
-//		TP.enque([b = aBegin, e = aEnd, &water, dt_ = dt]() {std::for_each(water.begin() + b, water.begin() + e, [dt_](Drop& x) {x.gravityEffect(dt_); x.boundControl(); x.motionUpdate(dt_); }); });//zbog multithread-anja lambdin captur nisan stavia & nego san zasebno stavia parametre da se nebi sta pomisalo
-//		aBegin += a;
-//		aEnd += a;
-//	}
-//	TP.enque([b = aBegin, e = aEnd, &water, dt_ = dt]() {std::for_each(water.begin() + b, water.end(), [dt_](Drop& x) {x.gravityEffect(dt_); x.boundControl(); x.motionUpdate(dt_); }); });	
-//	
-//	aBegin = 0;
-//	aEnd = a;
-//
-//	for (int i = 0; i < threadNum; i++) {
-//
-//		std::span<Drop> new_vec(water.begin() + aBegin, water.begin() + aEnd);
-//
-//		TP.enque([vec = new_vec, dt]() {colision(vec, dt); });
-//		aBegin += a;
-//		aEnd += a;
-//	}
-//	std::span<Drop> new_vec(water.begin() + aBegin, water.end());
-//
-//	TP.enque([vec = new_vec, dt]() {colision(vec, dt); });
-//		
-//}
 
 void motionUpdate2_1(std::vector<Drop>& water, double dt, size_t threadNum, Thread_pool& TP) {
 	size_t a = water.size() / threadNum;

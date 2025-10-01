@@ -200,7 +200,6 @@ public:
 
 		std::for_each(water.begin(), water.end(), [this](Drop& x) {cellID_fill(x); insert(x);});
 
-		//std::for_each(v.begin(), v.end(), [](std::vector<std::reference_wrapper<Drop>> x) {for (Drop a : x) { std::cout << " ovo je red:" << a.cellID.at(0) << " ovo je stupac:" << a.cellID.at(1); }std::cout << std::endl; });
 	}
 	void fill(std::span<Drop> water) {//verzija funkcije sa span strukturom
 		v.clear();
@@ -208,7 +207,6 @@ public:
 
 		std::for_each(water.begin(), water.end(), [this](Drop& x) {cellID_fill(x); insert(x); });
 
-		//std::for_each(v.begin(), v.end(), [](std::vector<std::reference_wrapper<Drop>> x) {for (Drop a : x) { std::cout << " ovo je red:" << a.cellID.at(0) << " ovo je stupac:" << a.cellID.at(1); }std::cout << std::endl; });
 	}
 
 
@@ -314,25 +312,28 @@ private:
 	size_t threadNum;
 	std::condition_variable cv;
 	std::mutex q_mutex;
-	bool ready_for_work=true;
 public:
 	Thread_pool() : threadNum(std::thread::hardware_concurrency()) {for (int i = 0; i < threadNum; i++) t.push_back(std::thread([this]() {work(); }));}
 	~Thread_pool() {for (auto& x : t) { if (x.joinable()) x.join(); }t.clear(); }
 
 	size_t get_threadNum() { return threadNum; };
 
-	void enque(std::function<void()> x) { q.push(std::move(x)); cv.notify_one(); };
+	void enque(std::function<void()> x) {
+		{
+			std::unique_lock<std::mutex> lock(q_mutex);
+			q.push(std::move(x));
+		}
+
+		cv.notify_one();
+	};
+
 	void deque(std::function<void()> x) { q.pop(); };
 	std::thread::id get_id() { return std::this_thread::get_id(); }
 
 	void work() {
-		while (true) {//not sure if multthreading works correct now
+		while (true) {//i should add some kind of stop for this loop at end of program
 
-		/*	if (q.empty()) {
-				lock.unlock();
-				std::this_thread::sleep_for(std::chrono::microseconds(250));
-				continue;
-			}*/
+		
 			std::function<void()> task;
 			{
 				std::unique_lock<std::mutex> lock(q_mutex);
@@ -348,6 +349,13 @@ public:
 	}
 
 };
+
+
+
+class Flip_method {
+
+};
+
 
 
 void init();
