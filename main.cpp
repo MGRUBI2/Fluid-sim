@@ -18,7 +18,7 @@ int main() {
 
 	Thread_pool TP;
 
-	bool mt = false;//multithread switch
+	bool multithread_switch= false;
 
 	while (running) {
 		Uint64 now = SDL_GetTicks();
@@ -40,7 +40,7 @@ int main() {
 			auto start = std::chrono::high_resolution_clock::now();
 
 
-			if (!mt)
+			if (!multithread_switch)
 				motionUpdate(water, dt);
 			else
 				motionUpdate2_1(water, dt,TP.get_threadNum(),TP);
@@ -52,7 +52,7 @@ int main() {
 
 			std::cout << trajanje.count()<<" "<<water.size() << std::endl;
 			if (trajanje.count() > 2)
-				mt = true;
+				multithread_switch = true;
 		}
 
 

@@ -12,6 +12,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <mutex>
+#include <condition_variable>
 
 
 
@@ -199,7 +200,6 @@ public:
 
 		std::for_each(water.begin(), water.end(), [this](Drop& x) {cellID_fill(x); insert(x);});
 
-		//std::for_each(v.begin(), v.end(), [](std::vector<std::reference_wrapper<Drop>> x) {for (Drop a : x) { std::cout << " ovo je red:" << a.cellID.at(0) << " ovo je stupac:" << a.cellID.at(1); }std::cout << std::endl; });
 	}
 	void fill(std::span<Drop> water) {//verzija funkcije sa span strukturom
 		v.clear();
@@ -207,7 +207,6 @@ public:
 
 		std::for_each(water.begin(), water.end(), [this](Drop& x) {cellID_fill(x); insert(x); });
 
-		//std::for_each(v.begin(), v.end(), [](std::vector<std::reference_wrapper<Drop>> x) {for (Drop a : x) { std::cout << " ovo je red:" << a.cellID.at(0) << " ovo je stupac:" << a.cellID.at(1); }std::cout << std::endl; });
 	}
 
 
@@ -277,11 +276,10 @@ public:
 	}
 
 	void dropColision(Drop& a, Drop& b, double dt) {
-		float r = a.get_radius()+3;//nebitno ciji radius jer imaju svi isti
-		//float brz = 0.5 ;//stavia san odokativno
+		float r = a.get_radius()+3;
 		float distance = sqrt(pow((b.get_posx() - a.get_posx()), 2) + pow((b.get_posy() - a.get_posy()), 2));
 
-		if (distance < r) {//ovo je slucaj kad se taknu. 
+		if (distance < r) { 
 
 			if (a.get_posx() > b.get_posx()) {
 				a.add_posx(r/2);
@@ -294,16 +292,19 @@ public:
 
 			if (a.get_posy() > b.get_posy()) {
 				b.set_posy(a.get_posy() -r/2);
-				b.velocity.at(1)= 0;//postavljan vertikalnu brzinu na 0 posto ga objekt ispod zaustavlja
+				b.velocity.at(1)= (b.velocity.at(1)+a.velocity.at(1))/2;//formula for law of conservation of linear momentum for non elastic colision with same mass
 			}
 
 			else if (a.get_posy() <= b.get_posy()) {
 				a.set_posy(b.get_posy() - r/2);
-				a.velocity.at(1)= 0;//postavljan vertikalnu brzinu na 0 posto ga objekt ispod zaustavlja
+				a.velocity.at(1)= (b.velocity.at(1)+a.velocity.at(1))/2;
 			}
 		}
 	}
 };
+
+
+
 
 
 class Thread_pool {
@@ -311,6 +312,7 @@ private:
 	std::queue<std::function<void()>> q; //red funkcija
 	std::vector<std::thread> t;
 	size_t threadNum;
+	std::condition_variable cv;
 	std::mutex q_mutex;
 public:
 	Thread_pool() : threadNum(std::thread::hardware_concurrency()) {for (int i = 0; i < threadNum; i++) t.push_back(std::thread([this]() {work(); }));}
@@ -318,32 +320,46 @@ public:
 
 	size_t get_threadNum() { return threadNum; };
 
-	void enque(std::function<void()> x) { q.push(x); };
-	void deque() { q.pop(); };
+
+	void enque(std::function<void()> x) {
+		{
+			std::unique_lock<std::mutex> lock(q_mutex);
+			q.push(std::move(x));
+		}
+
+		cv.notify_one();
+	};
+
+	void deque(std::function<void()> x) { q.pop(); };
 	std::thread::id get_id() { return std::this_thread::get_id(); }
 
 	void work() {
-		while (true) {
-			
-			std::unique_lock<std::mutex> lock(q_mutex);
+		while (true) {//i should add some kind of stop for this loop at end of program
 
-			if (q.empty()) {
-				lock.unlock();
-				std::this_thread::sleep_for(std::chrono::microseconds(250));
-				continue;
+		
+			std::function<void()> task;
+			{
+				std::unique_lock<std::mutex> lock(q_mutex);
+				cv.wait(lock, [this]() {return !q.empty();});
+				task = std::move(q.front());
+				q.pop();
 			}
 
-			std::function<void()> task = std::move(q.front());
-			q.pop();
 
-			lock.unlock();
-			
+
 			if (task)
 				task();		
 		}
 	}
 
 };
+
+
+
+class Flip_method {
+
+};
+
 
 
 void init();
