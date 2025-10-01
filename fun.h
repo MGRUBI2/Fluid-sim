@@ -305,6 +305,8 @@ public:
 
 
 
+
+
 class Thread_pool {
 private:
 	std::queue<std::function<void()>> q; //red funkcija
@@ -317,6 +319,7 @@ public:
 	~Thread_pool() {for (auto& x : t) { if (x.joinable()) x.join(); }t.clear(); }
 
 	size_t get_threadNum() { return threadNum; };
+
 
 	void enque(std::function<void()> x) {
 		{
@@ -341,6 +344,7 @@ public:
 				task = std::move(q.front());
 				q.pop();
 			}
+
 
 
 			if (task)
