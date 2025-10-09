@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include <mutex>
 #include <condition_variable>
-
+#include <cmath>
 
 
 class Drop {
@@ -30,10 +30,8 @@ class Drop {
 	std::array<unsigned, 2> cellID;
 
 public:
-	Drop(float x, float y) : radius(5) { pos[0] = x; pos[1] = y; velocity[0] = 0; velocity[1] = 0; acceleration[0] = 0; acceleration[1] = 0; }
+	Drop(float x, float y) : radius(5), mass(5) { pos[0] = x; pos[1] = y; velocity[0] = 0; velocity[1] = 0; acceleration[0] = 0; acceleration[1] = 0; }
 
-	void add_u(float x, float y) { velocity.at(0) += x; velocity.at(1) += y; }
-	void add_a(float x, float y) { acceleration.at(0) += x; acceleration.at(1) += y; }
 	//void set_pos(float x, float y) { pos[0] = x; pos[1] = y; }
 	void add_posx(float x) { pos[0] += x; } 
 	void add_posy(float x) { pos[1] += x; }
@@ -49,6 +47,9 @@ public:
 
 	std::array<float, 2>  get_pos() { return pos; }
 	std::array<float, 2> get_a() { return acceleration; }
+	float get_velocity_x() { return velocity.at(0); }
+	float get_velocity_y() { return velocity.at(1); }
+	float get_mass() { return mass; }
 	float get_posx() { return pos[0]; }
 	float get_posy() { return pos[1]; }
 	float get_radius() { return radius; }
@@ -56,7 +57,7 @@ public:
 	friend class Spatial_hash;
 
 	void render(SDL_Renderer* renderer) {
-		std::vector<SDL_Vertex> v=drawDrop();
+		std::vector<SDL_Vertex> v = drawDrop();
 		/*std::vector<SDL_Vertex> v= midPointAlg();*/
 
 
@@ -67,11 +68,11 @@ public:
 	}
 
 	void motionUpdate(double dt) {
-		/*u.at(0) += a.at(0);
-		u.at(1) += a.at(1);
+	/*	velocity.at(0) += acceleration.at(0)*dt;
+		velocity.at(1) += acceleration.at(1)*dt;
 
-		pos.at(0) += u.at(0);
-		pos.at(1) += u.at(1);*/
+		pos.at(0) += velocity.at(0);
+		pos.at(1) += velocity.at(1);*/
 
 		//if (a.at(0)>0)//otpor zraka
 		//	a.at(0)-=1* dt;
@@ -116,18 +117,20 @@ public:
 		return v1;
 	}
 
-	//std::vector<SDL_Vertex> midPointAlg() {//vraca vector struktura priko kojih cemo crtat krug
-	//	int x = r, y = 0;
+	//std::vector<SDL_Vertex> midPointAlg() {//vraca vector struktura priko kojih cemo crtat krug // netocan 
+	//	int x = radius, y = 0;
 
 	//	std::vector<SDL_Vertex> v1;
+	//	SDL_Color color = { 255,255,255,255 };
+	//	SDL_FPoint t = { 0.0f,0.0f };
 
-	//	v1.push_back({ {x + pos.at(0),y + pos.at(1)} , {255, 255, 255, 255 },{0.0f, 0.0f} });
-	//	v1.push_back({ {x + pos.at(0),-y + pos.at(1) }, { 255, 255, 255, 255 }, { 0.0f, 0.0f} });
-	//	v1.push_back({ { y + pos.at(0),x + pos.at(1) }, { 255, 255, 255, 255 }, { 0.0f, 0.0f} });
-	//	v1.push_back({ { -y + pos.at(0),x + pos.at(1) }, { 255, 255, 255, 255 }, { 0.0f, 0.0f} });
+	//	v1.push_back( {x + pos.at(0),y + pos.at(1), 255, 255, 255, 255 });
+	//	v1.push_back( {x + pos.at(0),-y + pos.at(1) ,  255, 255, 255, 255  });
+	//	v1.push_back( { y + pos.at(0),x + pos.at(1) ,  255, 255, 255, 255  });
+	//	v1.push_back( { -y + pos.at(0),x + pos.at(1) ,  255, 255, 255, 255 });
 
 
-	//	int p = 1 - r;
+	//	int p = 1 - radius;
 	//	while (x > y) {
 	//		y++;
 
@@ -141,17 +144,17 @@ public:
 	//		if (x < y)
 	//			break;
 
-	//		v1.push_back({ {x + pos.at(0),y + pos.at(1) }, { 255, 255, 255, 255 }, { 0.0f, 0.0f }});
-	//		v1.push_back({ {- x + pos.at(0),y + pos.at(1)}, {255, 255, 255, 255}, {0.0f, 0.0f} });
-	//		v1.push_back({ {x + pos.at(0),-y + pos.at(1) }, { 255, 255, 255, 255 }, { 0.0f, 0.0f } });
-	//		v1.push_back({ {-x + pos.at(0),-y + pos.at(1) }, { 255, 255, 255, 255 }, { 0.0f, 0.0f } });
+	//		v1.push_back( {x + pos.at(0),y + pos.at(1) ,  255, 255, 255, 255 });
+	//		v1.push_back( {- x + pos.at(0),y + pos.at(1),255, 255, 255, 255});
+	//		v1.push_back( {x + pos.at(0),-y + pos.at(1) , 255, 255, 255, 255 });
+	//		v1.push_back( {-x + pos.at(0),-y + pos.at(1) ,  255, 255, 255, 255 });
 
 
 	//		if (x != y) {
-	//			v1.push_back({{ y + pos.at(0),x + pos.at(1) }, { 255, 255, 255, 255 }, { 0.0f, 0.0f }});
-	//			v1.push_back({{ -y + pos.at(0),x + pos.at(1) }, { 255, 255, 255, 255 }, { 0.0f, 0.0f }});
-	//			v1.push_back({{ y + pos.at(0),-x + pos.at(1) }, { 255, 255, 255, 255 }, { 0.0f, 0.0f }});
-	//			v1.push_back({{ -y + pos.at(0),-x + pos.at(1) }, { 255, 255, 255, 255 }, { 0.0f, 0.0f } });
+	//			v1.push_back({ y + pos.at(0),x + pos.at(1) , 255, 255, 255, 255 });
+	//			v1.push_back({ -y + pos.at(0),x + pos.at(1), 255, 255, 255, 255 });
+	//			v1.push_back({ y + pos.at(0),-x + pos.at(1) ,  255, 255, 255, 255 });
+	//			v1.push_back({ -y + pos.at(0),-x + pos.at(1) ,  255, 255, 255, 255 });
 
 	//		}
 
@@ -166,7 +169,7 @@ public:
 			pos[0] = 0;
 		if (pos[1] > 720){
 			pos[1] = 720;
-			velocity.at(1) *= -0.25;
+			velocity.at(1) *= -0.25;//floor bounce
 		}			
 		if (pos[1] < 0) {
 			pos[1] = 0;
@@ -224,7 +227,7 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////triba optimizirat fun jer je trnutno O(2n), a moze bit O(2nlog) ili O(2*1)!!!!!!!
 	void cellID_fill(Drop& a) {//funkcija prepoznaje gdje se objekt nalazi na gridu i dodjeljuje id objektu
-		unsigned cellSize = static_cast<int> (2 * a.get_radius());//celija je velicine diametra objekta
+		unsigned cellSize = static_cast<int> (6 * a.get_radius());//size of cell is made so 3 stacked drops can fit. not too much so it lowers performance and not to small to worsen detection 
 		unsigned id = 0;
 
 		for (int i = cellSize; i <= 720; i +=cellSize) {//720 je hardkodirana rezolucija
@@ -273,7 +276,7 @@ public:
 		}
 
 
-	}
+	}	
 
 	void dropColision(Drop& a, Drop& b, double dt) {
 		float r = a.get_radius()+3;
@@ -292,29 +295,32 @@ public:
 
 			if (a.get_posy() > b.get_posy()) {
 				b.set_posy(a.get_posy() -r/2);
-				b.velocity.at(1)= (b.velocity.at(1)+a.velocity.at(1))/2;//formula for law of conservation of linear momentum for non elastic colision with same mass
+				b.velocity.at(1) = (b.get_mass() * b.get_velocity_y()+a.get_mass() * a.get_velocity_y()) / (a.get_mass() + b.get_mass())*dt;  //formula for non elastic colision
 			}
 
 			else if (a.get_posy() <= b.get_posy()) {
 				a.set_posy(b.get_posy() - r/2);
-				a.velocity.at(1)= (b.velocity.at(1)+a.velocity.at(1))/2;
+				a.velocity.at(1) = (a.get_mass() * a.get_velocity_y() + b.get_mass() * b.get_velocity_y()) / (b.get_mass() + a.get_mass())*dt;
 			}
 		}
 	}
+
 };
+
 
 
 
 class Thread_pool {
 private:
-	std::queue<std::function<void()>> q; //red funkcija
+	std::queue<std::function<void()>> q; //queue of functions
 	std::vector<std::thread> t;
 	size_t threadNum;
 	std::condition_variable cv;
 	std::mutex q_mutex;
+	bool is_end_of_work=false;
 public:
 	Thread_pool() : threadNum(std::thread::hardware_concurrency()) {for (int i = 0; i < threadNum; i++) t.push_back(std::thread([this]() {work(); }));}
-	~Thread_pool() {for (auto& x : t) { if (x.joinable()) x.join(); }t.clear(); }
+	~Thread_pool() { is_end_of_work = true; for (auto& x : t) { if (x.joinable()) x.join(); }t.clear(); }
 
 	size_t get_threadNum() { return threadNum; };
 
@@ -331,13 +337,17 @@ public:
 	std::thread::id get_id() { return std::this_thread::get_id(); }
 
 	void work() {
-		while (true) {//i should add some kind of stop for this loop at end of program
+		while (true) {
 
 		
 			std::function<void()> task;
 			{
 				std::unique_lock<std::mutex> lock(q_mutex);
-				cv.wait(lock, [this]() {return !q.empty();});
+				cv.wait(lock, [this]() {return !q.empty() || is_end_of_work;});
+
+				if (is_end_of_work == true)
+					break;
+
 				task = std::move(q.front());
 				q.pop();
 			}
@@ -352,9 +362,11 @@ public:
 
 
 
-class Flip_method_grid {
+class Flip_method {
 private:
-	int cell_size= 30;
+
+public:
+
 };
 
 

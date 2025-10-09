@@ -6,15 +6,28 @@ SDL_Renderer* renderer;
 void input(bool* running, std::vector<Drop>& water) {
 	float x = 0, y = 0;
 
-	const bool* keystate = SDL_GetKeyboardState(NULL);//vraca listu stisnutih tipki
+	const bool* keystate = SDL_GetKeyboardState(NULL);//returns list of pressed buttons
 	unsigned mousestate = SDL_GetMouseState(&x, &y);
 
-	if (keystate[SDL_SCANCODE_ESCAPE]) {
+	if (keystate[SDL_SCANCODE_ESCAPE]) {// simulation termination
 		*running = false;
 		return;
 	}
-	if (mousestate == SDL_BUTTON_MASK(1))
+	if (mousestate == SDL_BUTTON_MASK(1))//spawns drop by drop
 		water.push_back(Drop(x, y));
+
+	if (keystate [SDL_SCANCODE_SPACE]) {//spawns bigger group of drops. number of drops is randomly chosen
+		int x = 100, y = 100;
+
+		for (int i = 0; i < 3; i++) {
+			for (int j= 0; j < 70; j++) {
+				water.push_back(Drop(x, y));
+				x += 15;
+			}
+			y+= 25;
+			x = 100;
+		}
+	}
 }
 
 void colision(std::vector<Drop>& water, double dt) {
@@ -72,8 +85,7 @@ void render(std::vector<Drop> water) {
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
-	std::for_each(water.begin(), water.end(), [](Drop x) {x.render(renderer); });//render kapljica
-
+	std::for_each(water.begin(), water.end(), [](Drop x) {x.render(renderer); });//Drop render 
 	SDL_RenderPresent(renderer);
 }
 

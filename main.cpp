@@ -59,7 +59,7 @@ int main() {
 
 
 		lastTime = now;
-		SDL_Delay(6.9);//fpslock na 144fps
+		SDL_Delay(6.9);//fpslock 144fps
 	}
 
 
