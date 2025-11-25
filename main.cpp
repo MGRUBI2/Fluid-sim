@@ -12,39 +12,49 @@ int main() {
 
 	 
 	SDL_Event event;
-	bool running = true;
+	bool isRunning = true;
 
 	Uint64 lastTime = 0;
 
-	Thread_pool TP;
+	ThreadPool TP;
 
 	bool multithread_switch= false;
 
-	while (running) {
+	std::mutex waterMutex;
+
+	while (isRunning) {
 		Uint64 now = SDL_GetTicks();
 		double dt = static_cast<double> (now-lastTime)* 1000.0 / SDL_GetPerformanceFrequency();
 
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) {
-				running = false;
+				isRunning = false;
 				break;
 			}			
 		}
 
 	
-		input(&running, water);
+		input(&isRunning, water,waterMutex);
 		if (!water.empty()) {
 			
-			render(water);
+			{
+				std::unique_lock<std::mutex> lock(waterMutex);
+
+				sort_by_cell_id(water);
+				render(water);
+			}
 
 			auto start = std::chrono::high_resolution_clock::now();
 
+			{
+				std::unique_lock<std::mutex> lock(waterMutex);
 
-			if (!multithread_switch)
-				motionUpdate(water, dt);
-			else
-				motionUpdate2_1(water, dt,TP.get_threadNum(),TP);
-			
+				if (!multithread_switch)
+					motionUpdate(water, dt);
+				else
+					motionUpdate2_1(water, dt, TP.get_threadNum(), TP);
+			}
+			TP.waitAll();
 
 			auto end = std::chrono::high_resolution_clock::now();
 
@@ -58,7 +68,7 @@ int main() {
 
 
 		lastTime = now;
-		SDL_Delay(6.9);//fpslock na 144fps
+		SDL_Delay(6.9);//fpslock 144fps
 	}
 
 
