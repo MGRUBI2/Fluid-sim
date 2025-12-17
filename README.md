@@ -5,7 +5,7 @@
 This project is about fluid simulation in language C++ and graphic library SDL3.
 It is work in progress. For now spatial hash grid and thread pool are implemented for better
 performance. There is still work with project optimisation and bug fix.
-After that is will begin implementig flip and pic method for fluid physics.
+After that i will begin implementig flip and pic method for fluid physics.
 
 ## Problems
 
